@@ -1,13 +1,16 @@
 #include <cstdlib>
+#include "convar_sm_l4d.h"
 #include "eiface.h"
 #include "icvar.h"
 #include "tier1/iconvar.h"
-#include "tier1/convar.h"
+//#include "memutils.h"
+#include "input.h"
+#include "thirdperson_patch.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 //#include "tier0/memdbgon.h"
 
-class RecordingHelpers: public IServerPluginCallbacks
+class RecordingHelpers: public IServerPluginCallbacks, public IConCommandBaseAccessor
 {
 public:
 	// IServerPluginCallbacks methods
@@ -35,6 +38,9 @@ public:
 	virtual void			OnEdictAllocated( edict_t *edict );
 	virtual void			OnEdictFreed( const edict_t *edict  );	
 
+	// IConCommandBaseAccessor
+	virtual bool RegisterConCommandBase( ConCommandBase *pVar );
+
 };
 
 
@@ -42,7 +48,18 @@ RecordingHelpers g_RecordingHelpersPlugin;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(RecordingHelpers, IServerPluginCallbacks, INTERFACEVERSION_ISERVERPLUGINCALLBACKS, g_RecordingHelpersPlugin );
 
 ICvar * g_pCvar = NULL;
+IInput * g_pInput = NULL;
 
+CON_COMMAND( thirdpersonshoulder_hax, "Let's make thirdpersonshoulder work again." )
+{
+	g_pInput->CAM_ToThirdPerson();
+}
+
+
+// Find the global IInput instance (CInput actually)
+IInput * GetGlobalIInput();
+// Remove FCVAR_DEVELOPMENTONLY from all cvars
+void RemoveDevFlags();
 
 //---------------------------------------------------------------------------------
 // Purpose: called once per server frame, do recurring work here (like checking for timeouts)
@@ -64,13 +81,24 @@ bool RecordingHelpers::Load( CreateInterfaceFn interfaceFactory, CreateInterface
 		return false;
 	}
 
-	// Remove all devonly flags
-	ICvar::Iterator iter(g_pCvar); 
-	for ( iter.SetFirst() ; iter.IsValid() ; iter.Next() )
-	{  
-		ConCommandBase *cmd = iter.Get();
-		cmd->RemoveFlags(FCVAR_DEVELOPMENTONLY);
-	}
+	DevMsg("Found g_pCVar at %08x\n", g_pCvar);
+	
+	g_pInput = GetGlobalIInput();
+
+	DevMsg("Found g_pInput at %08x\n", g_pInput);
+
+	PatchCInputPCZChecks(g_pInput);
+
+	DevMsg("Patched Input Checks\n");
+
+	RemoveDevFlags();
+
+	g_pCvar->RegisterConCommand(&thirdpersonshoulder_hax_command);
+	ConVar_Register(0, this);
+
+	DevMsg("Registered CVars and Commands\n");
+
+	Msg("RecordingHelpers Loaded Successfully.\n");
 	return true;
 }
 
@@ -79,6 +107,8 @@ bool RecordingHelpers::Load( CreateInterfaceFn interfaceFactory, CreateInterface
 //---------------------------------------------------------------------------------
 void RecordingHelpers::Unload( void )
 {
+	UnpatchCInputPCZChecks(g_pInput);
+	ConVar_Unregister( );
 }
 
 //---------------------------------------------------------------------------------
@@ -130,6 +160,7 @@ void RecordingHelpers::LevelShutdown( void ) // !!!!this can get called multiple
 //---------------------------------------------------------------------------------
 void RecordingHelpers::ClientActive( edict_t *pEntity )
 {
+	Msg("\n\nThis is where this is!!!!!\n\n\n");
 }
 
 void RecordingHelpers::ClientFullyConnect( edict_t *pEntity )
@@ -200,3 +231,41 @@ void RecordingHelpers::OnEdictAllocated( edict_t *edict )
 void RecordingHelpers::OnEdictFreed( const edict_t *edict  )
 {
 }
+
+bool RecordingHelpers::RegisterConCommandBase( ConCommandBase *pVar )
+{
+	pVar->SetNext(NULL);
+	g_pCvar->RegisterConCommand(pVar);
+	return true;
+}
+
+IInput * GetGlobalIInput()
+{
+	ConCommand * pCmdThirdPersonShoulder = g_pCvar->FindCommand("thirdpersonshoulder");
+	if(pCmdThirdPersonShoulder == NULL)
+	{
+		Warning("Couldn't find thirdpersonshoulder command.\n");
+		return NULL;
+	}
+	char * pAddr = (char*)pCmdThirdPersonShoulder->GetCallback();
+	if(pAddr == NULL)
+	{
+		Warning("Couldn't read ThirdPersonShoulder callback\n");
+		return NULL;
+	}
+
+	// First instruction of this command is mov ecx, offset input (g_pInput)
+	// so to byttes into it is the IInput *
+	return **(IInput***)(pAddr + 2);
+}
+
+void RemoveDevFlags()
+{
+	ICvar::Iterator iter(g_pCvar); 
+	for ( iter.SetFirst() ; iter.IsValid() ; iter.Next() )
+	{  
+		ConCommandBase *cmd = iter.Get();
+		cmd->RemoveFlags(FCVAR_DEVELOPMENTONLY);
+	}
+}
+

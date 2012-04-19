@@ -51,7 +51,7 @@
     <ClCompile>
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..;$(HL2SDKL4D2)\public;$(HL2SDKL4D2)\public\engine;$(HL2SDKL4D2)\public\tier0;$(HL2SDKL4D2)\public\tier1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;$(HL2SDKL4D2)\game\shared;$(HL2SDKL4D2)\game\client;$(HL2SDKL4D2)\public;$(HL2SDKL4D2)\public\engine;$(HL2SDKL4D2)\public\tier0;$(HL2SDKL4D2)\public\tier1;$(MMSOURCE18)\core;$(MMSOURCE18)\core\sourcehook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;COMPILER_MSVC;COMPILER_MSVC32;_DEBUG;_WINDOWS;_USRDLL;SDK_EXPORTS;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -79,7 +79,7 @@
     <ClCompile>
       <AdditionalOptions>/MP%(AdditionalOptions)</AdditionalOptions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>..;$(HL2SDKL4D2)\public;$(HL2SDKL4D2)\public\engine;$(HL2SDKL4D2)\public\tier0;$(HL2SDKL4D2)\public\tier1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;$(HL2SDKL4D2)\game\shared;$(HL2SDKL4D2)\game\client;$(HL2SDKL4D2)\public;$(HL2SDKL4D2)\public\engine;$(HL2SDKL4D2)\public\tier0;$(HL2SDKL4D2)\public\tier1;$(MMSOURCE18)\core;$(MMSOURCE18)\core\sourcehook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;COMPILER_MSVC;COMPILER_MSVC32;NDEBUG;_WINDOWS;_USRDLL;SDK_EXPORTS;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -104,7 +104,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\memutils.cpp" />
     <ClCompile Include="..\recording_helpers.cpp" />
+    <ClCompile Include="..\thirdperson_patch.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\convar_sm_l4d.h" />
+    <ClInclude Include="..\input.h" />
+    <ClInclude Include="..\memutils.h" />
+    <ClInclude Include="..\thirdperson_patch.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
