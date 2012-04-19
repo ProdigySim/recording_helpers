@@ -50,11 +50,6 @@ EXPOSE_SINGLE_INTERFACE_GLOBALVAR(RecordingHelpers, IServerPluginCallbacks, INTE
 ICvar * g_pCvar = NULL;
 IInput * g_pInput = NULL;
 
-CON_COMMAND( thirdpersonshoulder_hax, "Let's make thirdpersonshoulder work again." )
-{
-	g_pInput->CAM_ToThirdPerson();
-}
-
 
 // Find the global IInput instance (CInput actually)
 IInput * GetGlobalIInput();
@@ -93,7 +88,6 @@ bool RecordingHelpers::Load( CreateInterfaceFn interfaceFactory, CreateInterface
 
 	RemoveDevFlags();
 
-	g_pCvar->RegisterConCommand(&thirdpersonshoulder_hax_command);
 	ConVar_Register(0, this);
 
 	DevMsg("Registered CVars and Commands\n");
@@ -160,7 +154,6 @@ void RecordingHelpers::LevelShutdown( void ) // !!!!this can get called multiple
 //---------------------------------------------------------------------------------
 void RecordingHelpers::ClientActive( edict_t *pEntity )
 {
-	Msg("\n\nThis is where this is!!!!!\n\n\n");
 }
 
 void RecordingHelpers::ClientFullyConnect( edict_t *pEntity )
@@ -255,7 +248,7 @@ IInput * GetGlobalIInput()
 	}
 
 	// First instruction of this command is mov ecx, offset input (g_pInput)
-	// so to byttes into it is the IInput *
+	// so to bytes into it is the IInput *
 	return **(IInput***)(pAddr + 2);
 }
 
