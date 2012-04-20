@@ -1,29 +1,182 @@
+/**
+ * vim: set ts=4 sw=4 tw=99 noet :
+ * =============================================================================
+ * Thirdperson Patch
+ * Copyright (C) 2012 ProdigySim
+ * All rights reserved.
+ * =============================================================================
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, version 3.0, as published by the
+ * Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * As a special exception, the authors give you permission to link the
+ * code of this program (as well as its derivative works) to "Half-Life 2," the
+ * "Source Engine," the "SourcePawn JIT," and any Game MODs that run on software
+ * by the Valve Corporation.  You must obey the GNU General Public License in
+ * all respects for all other code used.  Additionally, AlliedModders LLC grants
+ * this exception to all derivative works.  AlliedModders LLC defines further
+ * exceptions, found in LICENSE.txt (as of this writing, version JULY-31-2007),
+ * or <http://www.sourcemod.net/license.php>.
+ */
+#include "recording_helpers.h"
 #include "thirdperson_patch.h"
+#include "memutils.h"
 
-static void (IInput::*g_fpCInput_CAM_Think)(void) = NULL;
-static int (IInput::*g_fpCInput_CAM_IsThirdPerson)(int) = NULL;
-static void (IInput::*g_fpCInput_CAM_ToThirdPersonShoulder)(void) = NULL;
+
+typedef void (*FuncRvEv)(void);
+// Function returns bool expects void
+typedef bool (*Func_RbEv)(void);
+// IInput member func returns int expects int
+typedef union {
+	int (IInput::*pFunc)(int);
+	FuncRvEv pVoidFunc;
+	void *pVoid;
+	BYTE *pByte;
+} IInput_Func_RiEi;
+// IInput member func returns void expects void
+typedef union  {
+	void (IInput::*pFunc)(void);
+	FuncRvEv pVoidFunc;
+	void * pVoid;
+	BYTE * pByte;
+} IInput_Func_RvEv;
+
+
+
+static IInput_Func_RvEv g_fpCInput_CAM_Think = {NULL};
+static IInput_Func_RiEi g_fpCInput_CAM_IsThirdPerson = {NULL};
+static IInput_Func_RvEv g_fpCInput_CAM_ToThirdPersonShoulder = {NULL};
+
+static IInput_Func_RiEi g_fpHaxed_CAM_IsThirdPerson = {NULL};
+static IInput_Func_RvEv g_fpHaxed_CAM_ToThirdPersonShoulder = {NULL};
+static IInput_Func_RvEv g_fpHaxed_CAM_Think = {NULL};
+
 static CInput_vtable g_HaxedVtable;
 static CInput_vtable * g_OriginalVtable = NULL;
 
-class CInputFucked
+
+static IInput_Func_RiEi GenerateCAM_IsThirdPersonFunc(IInput_Func_RiEi origCAM_IsThirdPerson)
 {
-public:
-	void CAM_Think( void )
+	static const int PCZCheckOffset = 3;
+	IInput_Func_RiEi newFunc;
+	
+	newFunc.pByte = g_MemUtils.CloneFunction(origCAM_IsThirdPerson.pByte);
+	if(newFunc.pByte == NULL) 
 	{
-		(reinterpret_cast<IInput*>(this)->*g_fpCInput_CAM_Think)();
-	}
-	int CAM_IsThirdPerson( int nSlot = -1 )
-	{
-		return (reinterpret_cast<IInput*>(this)->*g_fpCInput_CAM_IsThirdPerson)(nSlot);
-	}
-	void CAM_ToThirdPersonShoulder(void)
-	{
-		DevMsg("Sufficiently Haxed!!!\n");
-		(reinterpret_cast<IInput*>(this)->*g_fpCInput_CAM_ToThirdPersonShoulder)();
+		Warning("Couldn't clone CAM_IsThirdPerson function.\n");
+		return newFunc;
 	}
 
-};
+	if(newFunc.pByte[PCZCheckOffset] != 0xE8)
+	{
+		Warning("PCZ Check offset in CAM_IsThirdPerson incorrect.\n");
+		goto fail;
+	}
+
+	// Patch out the PCZCheck in our new function.
+	newFunc.pByte[PCZCheckOffset] = '\x33'; // XOR m32,m32
+	newFunc.pByte[PCZCheckOffset+1] = '\xC0'; // eax, eax
+	// 3 byte NOP
+	newFunc.pByte[PCZCheckOffset+2] = '\x0F';
+	newFunc.pByte[PCZCheckOffset+3] = '\x1F';
+	newFunc.pByte[PCZCheckOffset+4] = '\x00';
+
+	return newFunc;
+
+fail:
+	free(newFunc.pByte);
+	newFunc.pByte=NULL;
+	return newFunc;
+}
+
+static ConVar * c_thirdpersonshoulder = NULL;
+
+static bool checkCThirdPersonShoulder()
+{
+	return c_thirdpersonshoulder->GetBool();
+}
+
+static IInput_Func_RvEv GenerateCAM_ToThirdPersonShoulderFunc(IInput_Func_RvEv origCAM_ToThirdPersonShoulder)
+{
+	static const int PCZCheckOffset = 10;
+	IInput_Func_RvEv newFunc;
+	
+	newFunc.pByte = g_MemUtils.CloneFunction(origCAM_ToThirdPersonShoulder.pByte);
+	if(newFunc.pByte == NULL) 
+	{
+		Warning("Couldn't clone CAM_ToThirdPersonShoulder function.\n");
+		return newFunc;
+	}
+	
+	if(newFunc.pByte[PCZCheckOffset] != 0xE8)
+	{
+		Warning("PCZ Check offset in CAM_ToThirdPersonShoulder incorrect.\n");
+		goto fail;
+	}
+	// Patch out the PCZCheck in our new function.
+	newFunc.pByte[PCZCheckOffset] = '\x33'; // XOR m32,m32
+	newFunc.pByte[PCZCheckOffset+1] = '\xC0'; // eax, eax
+	// 3 byte NOP
+	newFunc.pByte[PCZCheckOffset+2] = '\x0F';
+	newFunc.pByte[PCZCheckOffset+3] = '\x1F';
+	newFunc.pByte[PCZCheckOffset+4] = '\x00';
+
+	return newFunc;
+
+fail:
+	free(newFunc.pByte);
+	newFunc.pByte=NULL;
+	return newFunc;
+}
+
+static IInput_Func_RvEv GenerateCAM_ThinkFunc(IInput_Func_RvEv origCAM_Think)
+{
+	static const int PCZCheckFuncOffset = 152;
+	IInput_Func_RvEv newFunc = {NULL};
+	c_thirdpersonshoulder = g_pCvar->FindVar("c_thirdpersonshoulder");
+	if(c_thirdpersonshoulder = NULL)
+	{
+		Warning("Couldn't find c_thirdpersonshoulder cvar.\n");
+		return newFunc;
+	}
+
+	newFunc.pByte = g_MemUtils.CloneFunction(origCAM_Think.pByte);
+	if(newFunc.pByte == NULL)
+	{
+		Warning("Couldn't clone CAM_Think function.\n");
+		return newFunc;
+	}
+
+	if(newFunc.pByte[PCZCheckFuncOffset] != 0xE8)
+	{
+		Warning("PCZ Check Func offset in CAM_Think incorrect.\n");
+		goto fail;
+	}
+
+	// win32 has a subfunction that checks Hasplayercontrolledzombies + c_thirdpersonshoulder var.
+	// We replace this with our function which just checks c_thirdpersonshoulder
+
+	// Calculate call jump offset
+	int jumpOffset = g_MemUtils.GetCallOrJumpRelOffset(&newFunc.pByte[PCZCheckFuncOffset], reinterpret_cast<BYTE*>(checkCThirdPersonShoulder));
+
+	// Replace it
+	*reinterpret_cast<int*>(&newFunc.pByte[PCZCheckFuncOffset+1]) = jumpOffset;
+
+	return newFunc;
+fail:
+	free(newFunc.pByte);
+	newFunc.pByte=NULL;
+	return newFunc;
+}
 
 void PatchCInputPCZChecks(IInput *input)
 {
@@ -34,9 +187,9 @@ void PatchCInputPCZChecks(IInput *input)
 	memcpy(&g_HaxedVtable, pInputVtable, sizeof(CInput_vtable));
 
 	// Copy old function pointers from vtable
-	g_fpCInput_CAM_Think = pInputVtable->IInput.CAM_Think;
-	g_fpCInput_CAM_IsThirdPerson = pInputVtable->IInput.CAM_IsThirdPerson;
-	g_fpCInput_CAM_ToThirdPersonShoulder = pInputVtable->IInput.CAM_ToThirdPersonShoulder;
+	g_fpCInput_CAM_Think.pFunc = pInputVtable->IInput.CAM_Think;
+	g_fpCInput_CAM_IsThirdPerson.pFunc = pInputVtable->IInput.CAM_IsThirdPerson;
+	g_fpCInput_CAM_ToThirdPersonShoulder.pFunc = pInputVtable->IInput.CAM_ToThirdPersonShoulder;
 
 	// Dev output checks
 	DevMsg("CInput::CAM_Think(): %08x\n", g_fpCInput_CAM_Think);
@@ -47,23 +200,56 @@ void PatchCInputPCZChecks(IInput *input)
 	g_OriginalVtable = pInputVtable;
 
 	// Start customizing our vtable
-	g_HaxedVtable.IInput.CAM_Think = reinterpret_cast<void (IInput::*)(void)>(&CInputFucked::CAM_Think);
-	g_HaxedVtable.IInput.CAM_IsThirdPerson = reinterpret_cast<int (IInput::*)(int)>(&CInputFucked::CAM_IsThirdPerson);
-	g_HaxedVtable.IInput.CAM_ToThirdPersonShoulder = reinterpret_cast<void (IInput::*)(void)>(&CInputFucked::CAM_ToThirdPersonShoulder);
+	
+	g_fpHaxed_CAM_IsThirdPerson = GenerateCAM_IsThirdPersonFunc(g_fpCInput_CAM_IsThirdPerson);
+	if(g_fpHaxed_CAM_IsThirdPerson.pVoid == NULL) goto fail;
+	g_HaxedVtable.IInput.CAM_IsThirdPerson = g_fpHaxed_CAM_IsThirdPerson.pFunc;
+
+	g_fpHaxed_CAM_ToThirdPersonShoulder = GenerateCAM_ToThirdPersonShoulderFunc(g_fpCInput_CAM_ToThirdPersonShoulder);
+	if(g_fpHaxed_CAM_ToThirdPersonShoulder.pVoid == NULL) goto fail;
+	g_HaxedVtable.IInput.CAM_ToThirdPersonShoulder = g_fpHaxed_CAM_ToThirdPersonShoulder.pFunc;
+
+	g_fpHaxed_CAM_Think = GenerateCAM_ThinkFunc(g_fpCInput_CAM_Think);
+	if(g_fpHaxed_CAM_Think.pVoid == NULL) goto fail;
+	g_HaxedVtable.IInput.CAM_Think = g_fpHaxed_CAM_Think.pFunc;
 
 	// Dev output checks
-	DevMsg("CInputFucked::CAM_Think(): %08x\n", g_HaxedVtable.IInput.CAM_Think);
-	DevMsg("CInputFucked::CAM_IsThirdPerson(): %08x\n", g_HaxedVtable.IInput.CAM_IsThirdPerson);
-	DevMsg("CInputFucked::CAM_ToThirdPersonShoulder(): %08x\n", g_HaxedVtable.IInput.CAM_ToThirdPersonShoulder);
+	DevMsg("Haxed CAM_IsThirdPerson(): %08x\n", g_fpHaxed_CAM_IsThirdPerson.pVoid);
+	DevMsg("Haxed CAM_ToThirdPersonShoulder(): %08x\n", g_fpHaxed_CAM_ToThirdPersonShoulder.pVoid);
+	DevMsg("Haxed CAM_Think(): %08x\n", g_fpHaxed_CAM_Think.pVoid);
 
 	// Override the global CInput instance's vtable with our haxed one
 	*pInputInstance = &g_HaxedVtable;
+
+	return;
+
+fail:
+	Warning("Failed to Patch Thirdperson function calls. Bailing out.\n");
+	UnpatchCInputPCZChecks(input);
 }
 
 void UnpatchCInputPCZChecks(IInput *input)
 {
 	CInput_vtable ** pInputInstance = reinterpret_cast<CInput_vtable**>(input);
-	*pInputInstance = g_OriginalVtable;
+	if(g_OriginalVtable != NULL)
+	{
+		*pInputInstance = g_OriginalVtable;
+	}
+
+	if(g_fpHaxed_CAM_IsThirdPerson.pVoid != NULL)
+	{
+		free(g_fpHaxed_CAM_IsThirdPerson.pVoid);
+	}
+
+	if(g_fpHaxed_CAM_ToThirdPersonShoulder.pVoid != NULL)
+	{
+		free(g_fpHaxed_CAM_ToThirdPersonShoulder.pVoid);
+	}
+
+	if(g_fpHaxed_CAM_Think.pVoid != NULL)
+	{
+		free(g_fpHaxed_CAM_Think.pVoid);
+	}
 }
 
 

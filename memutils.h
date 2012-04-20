@@ -2,7 +2,7 @@
  * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
  * MemoryUtils
- * Copyright (C) 2004-2011 AlliedModders LLC., 2011 ProdigySim
+ * Copyright (C) 2004-2011 AlliedModders LLC., 2012 ProdigySim
  * All rights reserved.
  * =============================================================================
  *
@@ -36,6 +36,7 @@
 
 #include "sourcehook.h"
 #include "sh_memory.h"
+#include "libdasm.h"
 
 #if SH_SYS == SH_SYS_LINUX || SH_SYS == SH_SYS_APPLE
 #include <sh_vector.h>
@@ -71,10 +72,17 @@ public:
 	void *FindPattern(const void *start, const void *end, const char *pattern, size_t len);
 	void *ResolveSymbol(void *handle, const char *symbol);
     // Sets protection on the memory
-    bool ProtectMemory(void *pAddr, int nLength, int nProt);
+    static bool ProtectMemory(void *pAddr, int nLength, int nProt);
     // Allows the memory to be written to
-    bool SetMemPatchable(void *pAddr, int nSize);
+    static bool SetMemPatchable(void *pAddr, int nSize);
 
+	/* Assembly level functions */
+	static BYTE * GetCallOrJumpAbsAddr(BYTE * pInstr);
+	static int GetCallOrJumpRelOffset(BYTE * pInstrBase, BYTE *pAbsAddr);
+	// Clones a function in memory, returning a newly allocated
+	// memory chunk that can be CALLed or JUMP'd to as if it were the original function
+	// Should replace all relative offsets/jumps properly
+	static BYTE * CloneFunction(BYTE * pFunction);
 public:
 	bool GetLibraryInfo(const void *libPtr, DynLibInfo &lib);
 #if SH_SYS == SH_SYS_LINUX || SH_SYS == SH_SYS_APPLE

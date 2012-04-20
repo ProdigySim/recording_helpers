@@ -40,7 +40,7 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug - Left 4 Dead 2|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug - Left 4 Dead 2|Win32'">$(Configuration)\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug.playerslots - Left 4 Dead 2|Win32'">$(Configuration)\</IntDir>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug - Left 4 Dead 2|Win32'">true</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug - Left 4 Dead 2|Win32'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release - Left 4 Dead 2|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release - Left 4 Dead 2|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release - Left 4 Dead 2|Win32'">false</LinkIncremental>
@@ -73,7 +73,12 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release - Left 4 Dead 2|Win32'">
     <ClCompile>
@@ -101,17 +106,30 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\memutils.cpp" />
-    <ClCompile Include="..\recording_helpers.cpp" />
-    <ClCompile Include="..\thirdperson_patch.cpp" />
+    <ClCompile Include="..\libdasm.c">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug - Left 4 Dead 2|Win32'">ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\memutils.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug - Left 4 Dead 2|Win32'">ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\recording_helpers.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug - Left 4 Dead 2|Win32'">ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <ClCompile Include="..\thirdperson_patch.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug - Left 4 Dead 2|Win32'">ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\convar_sm_l4d.h" />
     <ClInclude Include="..\input.h" />
+    <ClInclude Include="..\libdasm.h" />
     <ClInclude Include="..\memutils.h" />
+    <ClInclude Include="..\opcode_tables.h" />
+    <ClInclude Include="..\recording_helpers.h" />
     <ClInclude Include="..\thirdperson_patch.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -2,8 +2,8 @@
  * vim: set ts=4 sw=4 tw=99 noet :
  * =============================================================================
  * MemoryUtils
- * Copyright (C) 2004-2011 AlliedModders LLC., 2011 Prodigysim
- *  All rights reserved.
+ * Copyright (C) 2004-2011 AlliedModders LLC., 2012 Prodigysim
+ * All rights reserved.
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -629,3 +629,76 @@ bool MemoryUtils::SetMemPatchable(void *pAddr, int nSize)
     return ProtectMemory(pAddr, (int)nSize, SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
 }
 
+BYTE * MemoryUtils::GetCallOrJumpAbsAddr(BYTE * pInstr)
+{
+
+	BYTE * nextInstrAddress = pInstr +5;
+	int jumpTargetOffset = *(int*)(pInstr+1);
+	return nextInstrAddress + jumpTargetOffset;
+}
+
+int MemoryUtils::GetCallOrJumpRelOffset(BYTE * pInstrBase, BYTE *pAbsAddr)
+{	
+	return pAbsAddr - (pInstrBase + 5);
+}
+
+
+BYTE * MemoryUtils::CloneFunction(BYTE *pFunc)
+{
+	static INSTRUCTION insBuf;
+	// First pass, determine function length by seeking INT instruction
+	int res;
+	size_t length = 0;
+	BYTE * pCurInstr = pFunc;
+	do
+	{
+		res = get_instruction(&insBuf, pCurInstr, MODE_32);
+		if(res == 0)
+		{
+			// Unknown instruction or not an instruction.
+			return NULL;
+		}
+		length+=res;
+		pCurInstr+=res;
+	} while(insBuf.type != INSTRUCTION_TYPE_INT);
+
+	// Note: Allocates an extra byte (INT instruction comes along with us)
+	BYTE * pNewFunc = (BYTE*)malloc(length);
+	
+	// bad alloc
+	if(pNewFunc == NULL) return NULL;
+
+	// Pull the original function into our newly allocated memory
+	memcpy(pNewFunc, pFunc, length);
+
+	
+	pCurInstr = pFunc;
+	int curOffset = 0;
+	do
+	{
+		res = get_instruction(&insBuf, pCurInstr, MODE_32);
+		// assume res isn't 0 since we've done this before
+
+		// TODO: There's probably other relative offset instructions that need
+		// converting. This only fixes one of them--but it's all this project needs for now
+		// I can't guarantee the correctness of this.
+		switch (insBuf.type)
+		{
+		//case INSTRUCTION_TYPE_JMP:
+		case INSTRUCTION_TYPE_CALL:
+			if(insBuf.immbytes == 4)
+			{
+				*(int*)(pNewFunc+curOffset+1) = GetCallOrJumpRelOffset(pNewFunc+curOffset, GetCallOrJumpAbsAddr(pCurInstr));
+			}
+			break;
+		default:
+			break;
+		}
+
+		pCurInstr+=res;
+		curOffset+=res;
+	} while(insBuf.type != INSTRUCTION_TYPE_INT);
+
+
+	return pNewFunc;
+}
