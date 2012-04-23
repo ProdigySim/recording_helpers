@@ -143,7 +143,7 @@ static IInput_Func_RvEv GenerateCAM_ThinkFunc(IInput_Func_RvEv origCAM_Think)
 	static const int PCZCheckFuncOffset = 152;
 	IInput_Func_RvEv newFunc = {NULL};
 	c_thirdpersonshoulder = g_pCvar->FindVar("c_thirdpersonshoulder");
-	if(c_thirdpersonshoulder = NULL)
+	if(c_thirdpersonshoulder == NULL)
 	{
 		Warning("Couldn't find c_thirdpersonshoulder cvar.\n");
 		return newFunc;
