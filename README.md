@@ -18,6 +18,9 @@ e.g. make a shortcut to "C:\Program Files\Steam\steam.exe" -applaunch 550 -insec
 
 Changelog:
 ==
+0.3:
+- Fixed a crash that would occur upon entering thirdperson mode
+
 0.2:
 - Added some patches to enable thirdpersonshoulder usage in gamemodes with player controlled zombies.
 
