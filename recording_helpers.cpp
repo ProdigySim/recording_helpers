@@ -62,6 +62,7 @@ bool RecordingHelpers::Load( CreateInterfaceFn interfaceFactory, CreateInterface
 		return false;
 	}
 
+#ifdef L4D2
 	DevMsg("Found g_pCVar at %08x\n", g_pCvar);
 	
 	g_pInput = GetGlobalIInput();
@@ -71,7 +72,7 @@ bool RecordingHelpers::Load( CreateInterfaceFn interfaceFactory, CreateInterface
 	PatchCInputPCZChecks(g_pInput);
 
 	DevMsg("Patched Input Checks\n");
-
+#endif
 	RemoveDevFlags();
 
 	ConVar_Register(0, this);
@@ -87,7 +88,9 @@ bool RecordingHelpers::Load( CreateInterfaceFn interfaceFactory, CreateInterface
 //---------------------------------------------------------------------------------
 void RecordingHelpers::Unload( void )
 {
+#ifdef L4D2
 	UnpatchCInputPCZChecks(g_pInput);
+#endif
 	ConVar_Unregister( );
 }
 
