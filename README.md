@@ -5,7 +5,7 @@ This client plugin is simply a set of useful modifications and functions to help
 
 Features
 ==
-- Re-enables many hidden CVars on L4D2 by removing DEVELOPMENTONLY flags from them. 
+- Re-enables many hidden CVars on L4D by removing DEVELOPMENTONLY flags from them. 
 - Re-enables a native thirdperson(shoulder) mode in gamemodes with player-controlled zombies.
 
 
@@ -18,6 +18,10 @@ e.g. make a shortcut to "C:\Program Files\Steam\steam.exe" -applaunch 550 -insec
 
 Changelog:
 ==
+0.4:
+- Fixed thirdperson patches not working after recent L4D2 Updates
+- Initial release of L4D1 build (DEVONLY flag removal only)
+
 0.3:
 - Fixed a crash that would occur upon entering thirdperson mode
 
