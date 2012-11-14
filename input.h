@@ -64,8 +64,7 @@ public:
 
 	virtual void		ControllerCommands( void ) = 0;
 
-	// NOT IN L4D2 at all - Swarm only
-	// virtual bool		ControllerModeActive() = 0; 
+	virtual bool		ControllerModeActive() = 0; 
 	
 	virtual void		Joystick_Advanced( bool bSilent ) = 0; // Swarm
 
@@ -147,8 +146,7 @@ struct IInput_iface
 
 	void (IInput::*ControllerCommands)( void );
 
-	// NOT IN L4D2 at all - Swarm only
-	// virtual bool		ControllerModeActive() = 0; 
+	bool (IInput::*ControllerModeActive)( void ); 
 	
 	void (IInput::*Joystick_Advanced)( bool bSilent ); // Swarm
 
