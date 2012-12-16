@@ -146,7 +146,7 @@ struct IInput_iface
 
 	void (IInput::*ControllerCommands)( void );
 
-	bool (IInput::*ControllerModeActive)( void ); 
+//	bool (IInput::*ControllerModeActive)( void ); // Function removed again in 2118 for whatever reason.
 	
 	void (IInput::*Joystick_Advanced)( bool bSilent ); // Swarm
 

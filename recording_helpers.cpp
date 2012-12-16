@@ -113,7 +113,7 @@ void RecordingHelpers::UnPause( void )
 //---------------------------------------------------------------------------------
 const char *RecordingHelpers::GetPluginDescription( void )
 {
-	return "RecordingHelpers 0.4, ProdigySim";
+	return "RecordingHelpers 0.5, ProdigySim";
 }
 
 //---------------------------------------------------------------------------------
