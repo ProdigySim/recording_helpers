@@ -71,4 +71,6 @@ public:
 extern RecordingHelpers g_RecordingHelpersPlugin;
 
 extern ICvar * g_pCvar;
+#ifdef L4D2
 extern IInput * g_pInput;
+#endif

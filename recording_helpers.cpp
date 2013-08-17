@@ -28,19 +28,23 @@
  * or <http://www.sourcemod.net/license.php>.
  */
 #include "recording_helpers.h"
+#ifdef L4D2
 #include "thirdperson_patch.h"
+#endif
 
 RecordingHelpers g_RecordingHelpersPlugin;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(RecordingHelpers, IServerPluginCallbacks, INTERFACEVERSION_ISERVERPLUGINCALLBACKS, g_RecordingHelpersPlugin );
 
 ICvar * g_pCvar = NULL;
-IInput * g_pInput = NULL;
 
-
-// Find the global IInput instance (CInput actually)
-IInput * GetGlobalIInput();
 // Remove FCVAR_DEVELOPMENTONLY from all cvars
 void RemoveDevFlags();
+
+#ifdef L4D2
+IInput * g_pInput = NULL;
+// Find the global IInput instance (CInput actually)
+IInput * GetGlobalIInput();
+#endif
 
 //---------------------------------------------------------------------------------
 // Purpose: called once per server frame, do recurring work here (like checking for timeouts)
@@ -221,6 +225,7 @@ bool RecordingHelpers::RegisterConCommandBase( ConCommandBase *pVar )
 	return true;
 }
 
+#ifdef L4D2
 IInput * GetGlobalIInput()
 {
 	ConCommand * pCmdThirdPersonShoulder = g_pCvar->FindCommand("thirdpersonshoulder");
@@ -240,6 +245,7 @@ IInput * GetGlobalIInput()
 	// so to bytes into it is the IInput *
 	return **(IInput***)(pAddr + 2);
 }
+#endif
 
 void RemoveDevFlags()
 {
