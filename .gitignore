@@ -1,0 +1,10 @@
+rls/*
+msvc10/Release - Left 4 Dead 2/*
+msvc10/Debug - Left 4 Dead 2/*
+msvc10/Release - Left 4 Dead/*
+msvc10/Debug - Left 4 Dead/*
+msvc10/ipch/*
+*.suo
+*.sdf
+*.opensdf
+*.vcxproj.user
