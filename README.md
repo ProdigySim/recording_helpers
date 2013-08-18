@@ -18,6 +18,9 @@ e.g. make a shortcut to "C:\Program Files\Steam\steam.exe" -applaunch 550 -insec
 
 Changelog:
 ==
+0.6:
+- Fixed patches not working and after 2125 update
+
 0.5:
 - Fixed thirdperson patches not working after recent L4D2 Updates (Stop fucking with your interfaces)
 
