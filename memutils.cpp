@@ -699,6 +699,8 @@ BYTE * MemoryUtils::CloneFunction(BYTE *pFunc)
 		curOffset+=res;
 	} while(insBuf.type != INSTRUCTION_TYPE_INT);
 
+	// Sets it read/write/executable (executable being the important part here);
+	SetMemPatchable(pNewFunc, length);
 
 	return pNewFunc;
 }
