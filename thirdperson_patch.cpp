@@ -66,7 +66,7 @@ static CInput_vtable * g_OriginalVtable = NULL;
 
 static IInput_Func_RiEi GenerateCAM_IsThirdPersonFunc(IInput_Func_RiEi origCAM_IsThirdPerson)
 {
-	static const int PCZCheckOffset = 3;
+	static const int PCZCheckOffset = 6;
 	IInput_Func_RiEi newFunc;
 	
 	newFunc.pByte = g_MemUtils.CloneFunction(origCAM_IsThirdPerson.pByte);
@@ -140,7 +140,7 @@ fail:
 
 static IInput_Func_RvEv GenerateCAM_ThinkFunc(IInput_Func_RvEv origCAM_Think)
 {
-	static const int PCZCheckFuncOffset = 152;
+	static const int PCZCheckFuncOffset = 161;
 	IInput_Func_RvEv newFunc = {NULL};
 	c_thirdpersonshoulder = g_pCvar->FindVar("c_thirdpersonshoulder");
 	if(c_thirdpersonshoulder == NULL)
